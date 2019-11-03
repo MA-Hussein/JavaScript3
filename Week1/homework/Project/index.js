@@ -31,19 +31,19 @@
   function tableRowData(listTable, th, td, src) {
     const tableRow = createAndAppend('tr', listTable);
     const rowHeader = createAndAppend('th', tableRow, {
-      text: [th],
+      text: th,
       class: 'th',
     });
     if (th === 'Repository:') {
       const rowData = createAndAppend('td', tableRow);
       const link = createAndAppend('a', rowData, {
-        text: [td],
-        href: [src],
+        text: td,
+        href: src,
         target: '_blank',
       });
     } else {
       const rowData = createAndAppend('td', tableRow, {
-        text: [td],
+        text: td,
         class: 'td',
       });
     }
