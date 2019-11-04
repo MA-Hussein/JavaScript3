@@ -31,7 +31,7 @@ axios
 .get('https://picsum.photos/400')
 .then(function(response){
         const newImage = document.createElement('img');
-        document.body.appendChild(newIamge);
+        document.body.appendChild(newImage);
         newImage.setAttribute('src', response.request.responseURL);
 })
 .catch(function(error){
