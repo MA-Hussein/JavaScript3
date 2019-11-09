@@ -1,0 +1,121 @@
+'use strict';
+
+{
+  const HYF_REPOS_URL = 'https://api.github.com/orgs/HackYourFuture/repos?per_page=100';
+
+  function fetchJSON(url) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', url);
+      xhr.responseType = 'json';
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status <= 299) {
+          resolve(xhr.response);
+        } else {
+          reject(new Error(`Network error: ${xhr.status} - ${xhr.statusText}`));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Error! Network request failed...'));
+      xhr.send();
+    });
+  }
+
+  function createAndAppend(name, parent, options = {}) {
+    const elem = document.createElement(name);
+    parent.appendChild(elem);
+    Object.keys(options).forEach(key => {
+      const value = options[key];
+      if (key === 'text') {
+        elem.textContent = value;
+      } else {
+        elem.setAttribute(key, value);
+      }
+    });
+    return elem;
+  }
+
+  function renderError(error) {
+    const root = document.getElementById('root');
+    root.innerHTML = '';
+    createAndAppend('h1', root, { text: error.message, class: `alert-error` });
+  }
+
+  function addRow(tbody, label, value) {
+    const tr = createAndAppend('tr', tbody);
+    createAndAppend('td', tr, { text: `${label}:`, class: 'label' });
+    createAndAppend('td', tr, { text: value });
+    return tr;
+  }
+
+  function renderRepos(repo, div) {
+    div.innerHTML = '';
+    const table = createAndAppend('table', div);
+    const tbody = createAndAppend('tbody', table);
+    const firstRow = addRow(tbody, 'Name', '');
+    createAndAppend('a', firstRow.lastChild, {
+      href: repo.html_url,
+      text: repo.name,
+      target: `_blank`,
+    });
+    addRow(tbody, 'Description', repo.description);
+    addRow(tbody, 'Forks', repo.forks);
+    addRow(tbody, 'Updated', new Date(repo.updated_at).toLocaleString('en-GB'));
+  }
+
+  function renderContributions(repo, ul) {
+    fetchJSON(repo.contributors_url)
+      .then(contributors => {
+        ul.innerHTML = '';
+        createAndAppend('li', ul, { text: `Contributors:` });
+        contributors.forEach(contributor => {
+          const li = createAndAppend('li', ul);
+          const a = createAndAppend('a', li, { href: contributor.html_url, target: '_blank' });
+          const table = createAndAppend('table', a);
+          const tbody = createAndAppend('tbody', table);
+          const tr1 = createAndAppend('tr', tbody);
+          createAndAppend('img', tr1, { src: contributor.avatar_url });
+          createAndAppend('td', tr1, { text: contributor.login });
+          createAndAppend('td', tr1, { text: contributor.contributions });
+        });
+      })
+      .catch(error => renderError(error));
+  }
+
+  function createOptionElements(repositories, select) {
+    repositories
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((repo, index) => {
+        createAndAppend('option', select, { text: repo.name, value: index });
+      });
+  }
+
+  function main(url) {
+    const root = document.getElementById('root');
+    const header = createAndAppend('header', root);
+    createAndAppend('h1', header, { text: 'HYF Repositories' });
+    const select = createAndAppend('select', header);
+    const mainContainer = createAndAppend('div', root, { id: `main-container` });
+    const repoContainer = createAndAppend('section', mainContainer, { id: 'repo-container' });
+    const contributorsContainer = createAndAppend('section', mainContainer, { id: 'contributors-container' });
+    const ul = createAndAppend('ul', contributorsContainer, { id: 'contributors-list' });
+ 
+    fetchJSON(url)
+      .then(repositories => {
+        createOptionElements(repositories, select);
+
+        renderRepos(repositories[0], repoContainer);
+        renderContributions(repositories[0], ul);
+
+        select.addEventListener('change', () => {
+          const repo = repositories[select.value];
+          renderRepos(repo, repoContainer);
+          renderContributions(repo, ul);
+        });
+      })
+      .catch(error => renderError(error));
+  }
+
+  window.onload = () => {
+    main(HYF_REPOS_URL);
+  };
+}
