@@ -4,11 +4,11 @@
   const HYF_REPOS_URL = 'https://api.github.com/orgs/HackYourFuture/repos?per_page=100';
 
   function fetchJSON(url) {
-    return fetch(url).then(resolve => {
-      if (!resolve.ok) {
-        throw Error(`HTTP error ${resolve.status} - ${resolve.statusText}`);
+    return fetch(url).then(result => {
+      if (!result.ok) {
+        throw Error(`HTTP error ${result.status} - ${result.statusText}`);
       }
-      return resolve.json();
+      return result.json();
     });
   }
 	
