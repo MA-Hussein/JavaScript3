@@ -3,20 +3,12 @@
 {
   const HYF_REPOS_URL = 'https://api.github.com/orgs/HackYourFuture/repos?per_page=100';
 
-  function fetchJSON(url) {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', url);
-      xhr.responseType = 'json';
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status <= 299) {
-          resolve(xhr.response);
-        } else {
-          reject(new Error(`Network error: ${xhr.status} - ${xhr.statusText}`));
-        }
-      };
-      xhr.onerror = () => reject(new Error('Error! Network request failed...'));
-      xhr.send();
+function fetchJSON(url) {
+    return fetch(url).then(response => {
+      if (!response.ok) {
+        throw Error(`HTTP error ${response.status} - ${response.statusText}`);
+      }
+      return response.json();
     });
   }
 
@@ -40,27 +32,19 @@
     createAndAppend('h1', root, { text: error.message, class: `alert-error` });
   }
 
-  function addRow(tbody, label, value) {
-    const tr = createAndAppend('tr', tbody);
-    createAndAppend('td', tr, { text: `${label}:`, class: 'label' });
-    createAndAppend('td', tr, { text: value });
-    return tr;
-  }
+ function renderRepos(repo,repoContainer) {
 
-  function renderRepos(repo, div) {
-    div.innerHTML = '';
-    const table = createAndAppend('table', div);
-    const tbody = createAndAppend('tbody', table);
-    const firstRow = addRow(tbody, 'Name', '');
-    createAndAppend('a', firstRow.lastChild, {
-      href: repo.html_url,
-      text: repo.name,
-      target: `_blank`,
-    });
-    addRow(tbody, 'Description', repo.description);
-    addRow(tbody, 'Forks', repo.forks);
-    addRow(tbody, 'Updated', new Date(repo.updated_at).toLocaleString('en-GB'));
-  }
+      repoContainer.innerHTML = ' ';
+      const dateAndTime = new Date(repo.updated_at);
+      const selectedRepo = createAndAppend('ul',repoContainer);
+	  const repoDetails = createAndAppend('li', selectedRepo);
+	  createAndAppend('span', repoDetails, { text: `Repository Name : ` });
+      createAndAppend('a',repoDetails,{text:repo.name, href: repo.html_url})
+      createAndAppend('p', repoDetails, { text: `Fork :  ${repo.forks_count}` });
+      createAndAppend('p', repoDetails, { text: `Login :  ${repo.owner.login}` });
+      createAndAppend('p', repoDetails, { text: `Description :   ${repo.description}` });
+      createAndAppend('p', repoDetails, { text: `Updated : ${dateAndTime.toLocaleString('en-US')}` });
+    }
 
   function renderContributions(repo, ul) {
     fetchJSON(repo.contributors_url)
@@ -68,15 +52,11 @@
         ul.innerHTML = '';
         createAndAppend('li', ul, { text: `Contributors:` });
         contributors.forEach(contributor => {
-          const li = createAndAppend('li', ul);
-          const a = createAndAppend('a', li, { href: contributor.html_url, target: '_blank' });
-          const table = createAndAppend('table', a);
-          const tbody = createAndAppend('tbody', table);
-          const tr1 = createAndAppend('tr', tbody);
-          createAndAppend('img', tr1, { src: contributor.avatar_url });
-          createAndAppend('td', tr1, { text: contributor.login });
-          createAndAppend('td', tr1, { text: contributor.contributions });
-        });
+      const contributorInfo = createAndAppend('li', ul,{class:'contributor'})
+       createAndAppend('img', contributorInfo, { src: contributor.avatar_url})
+       createAndAppend('a', contributorInfo, { text: contributor.login, href: contributor.html_url ,target:"_blank"})
+       createAndAppend('p', contributorInfo, { text: contributor.contributions , class: 'sub-contributors'})
+      });
       })
       .catch(error => renderError(error));
   }
